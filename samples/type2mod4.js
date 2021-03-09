@@ -1,11 +1,11 @@
-// https://www.programiz.com/javascript/examples/decimal-binary
+// program to convert decimal to binary
 function decimalToBinary(x) {
         let bin = 0;
     let ram = {}, i = 1, step = 1;
 
-while (x != 0) { ram[remainder] = x % 2; // Added type 1 and type 2 changes
+while (x != 0) { ram[remainder] = x % 2; //Type1+2
 
-            console.log(`Step ${step++}: ${x}/2, Remainder = ${ram[remainder]}, Quotient = ${parseInt(x/2)}`);
+            console.log(`Step ${step++}: ${x}/2`);
         x = parseInt(x / 2);
 bin = bin + ram[remainder] * i;
 
