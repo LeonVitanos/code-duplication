@@ -8,6 +8,8 @@ WORKDIR /usr/jquery-data
 
 COPY prep.py .
 
+COPY script.py .
+
 COPY jquery_releases.csv .
 
 RUN python prep.py
@@ -23,6 +25,8 @@ WORKDIR /usr
 
 COPY jsinspect jsinspect
 
+COPY samples samples
+
 RUN npm install -g ./jsinspect
 
 # Increase the amount of memory nodejs can allocate, this
@@ -34,3 +38,4 @@ WORKDIR /usr/jquery-data
 # Open a bash prompt, such that you can execute commands 
 # such as `cloc`. 
 ENTRYPOINT ["bash"]
+RUN python3 script.py
