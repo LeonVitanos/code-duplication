@@ -9,17 +9,25 @@ if __name__ == "__main__":
     rootdir = os.path.dirname(os.path.realpath(__file__))
     paths = os.listdir(rootdir)
     paths = [x for x in paths if os.path.isdir(os.path.join(rootdir, x))]
+    paths.sort()
     pairs = list(itertools.combinations(paths, 2))
     
     n_code = []
+
+    for path in paths:
+        print(path, end=",")
+
+    print("\n")
 
     for path in paths:
         #Run cloc, with .json as output, and JavaScript as the selected language
         result = subprocess.run(['cloc', '-json', '-include-lang=JavaScript', os.path.join(rootdir, path)], stdout=subprocess.PIPE)
         lines_of_code = json.loads(result.stdout)["JavaScript"]["code"]
         n_code.append(lines_of_code)
+        print(path, "&", lines_of_code, "\\\\")
         #print(lines_of_code)
 
+'''
     for pair in pairs:
         #Run jsinspect with specific threshold. Request output to be at json form. Ignore files which cannot be read by jsinspect
         result = subprocess.run(["jsinspect", "-reporter", "json", "-t", "30", "--ignore", 'src/intro.js|src/outro.js',
@@ -41,3 +49,4 @@ if __name__ == "__main__":
         index2 = paths.index(pair[1])
         print("Path 1 #code:", n_code[index1], "Path 2 #code:", n_code[index2], "Pair #sim:", sim_n_code, 
         "Coverage:", sim_n_code/(n_code[index1]+n_code[index2]))
+'''
