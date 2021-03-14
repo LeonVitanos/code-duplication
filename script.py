@@ -5,7 +5,21 @@ import json
 import pathlib
 import plotly.express as px
 
+def merge_ranges(ranges):
+    ranges = iter(sorted(ranges))
+    current_start, current_stop = next(ranges)
+    for start, stop in ranges:
+        if start > current_stop:
+            # Gap between segments: output current segment and start a new one.
+            yield current_start, current_stop
+            current_start, current_stop = start, stop
+        else:
+            # Segments adjacent or overlapping: merge.
+            current_stop = max(current_stop, stop)
+    yield current_start, current_stop
+
 if __name__ == "__main__":
+    
     #Get the pairs of directories of the current path
     rootdir = os.path.dirname(os.path.realpath(__file__))
     paths = os.listdir(rootdir)
@@ -13,20 +27,16 @@ if __name__ == "__main__":
     paths.sort(key=lambda s: list(map(int, s.split('.'))))
     pairs = list(itertools.combinations(paths, 2))
     
-    n_code = []
-    
+    n_code = []    
     for path in paths:
         #Run cloc, with .json as output, and JavaScript as the selected language
-        result = subprocess.run(['cloc', '--not-match-f=intro.js|outro.js', '-json', '-include-lang=JavaScript', os.path.join(rootdir, path, "src")], stdout=subprocess.PIPE)
+        result = subprocess.run(['cloc', '--not-match-f=intro.js|outro.js|classes.js|event.js', '-json', '-include-lang=JavaScript', os.path.join(rootdir, path, "src")], stdout=subprocess.PIPE)
         lines_of_code = json.loads(result.stdout)
         lines_of_code = lines_of_code["JavaScript"]["code"] + lines_of_code["JavaScript"]["comment"] + lines_of_code["JavaScript"]["blank"]
         n_code.append(lines_of_code)
         #print(path, "&", lines_of_code, "\\\\")
     
-    
-    #n_code = [1202, 1202, 1381, 1302, 2129, 2534, 2561, 2627, 2935, 2937, 3282, 1940, 1956, 2090, 2114, 2195, 2195, 2198, 2848, 2848, 2841, 2951, 3293, 3293, 3346, 3452, 3787, 3887, 4376, 4376, 4443, 4475, 4861, 4861, 4908, 4944, 5198, 5198, 5392, 5392, 5368, 5468, 5312, 5317, 5321, 5333, 5266, 5288, 5320, 5316, 5323, 15095, 15073, 15092, 15092, 6320, 6319, 6312, 6307, 6307, 4802, 4823, 4817, 4827, 14461, 14510, 14521, 14521, 14521, 5733, 5731, 5733, 5733, 5726, 6013, 6034, 6095, 6117, 6117, 6235, 6235, 6352, 6357]
-    
-    #Initialize matrix with 1 in diagonal
+    #Initialize matrix with 1 in diagonal and all other to 0
     data=[]
     i=0
     for path in paths:
@@ -39,43 +49,56 @@ if __name__ == "__main__":
 
     for pair in pairs:
         #Run jsinspect with specific threshold. Request output to be at json form. Ignore files which cannot be read by jsinspect
-        result = subprocess.run(["jsinspect", "-reporter", "json", "-t", "30", "--ignore", 'src/intro.js|src/outro.js',
-          os.path.join(pair[0], "src"), os.path.join(pair[1], "src")], stdout=subprocess.PIPE, cwd=rootdir)
-        out = json.loads(result.stdout)
-        sim_n_code = 0
-        for match in out:
+        result = subprocess.run(["jsinspect", "-reporter", "json", "-t", "30", "--ignore", 
+        'src/intro.js|src/outro.js|src/attributes/classes.js|src/event.js', 
+        os.path.join(pair[0], "src"), os.path.join(pair[1], "src")], stdout=subprocess.PIPE, cwd=rootdir)
+        try:
+            out = json.loads(result.stdout.decode('utf-8'))
+            sim_n_code = 0
             
-            flag=False
-            for i, instance in enumerate(match["instances"]):
-                if i+1==len(match["instances"]):
-                    break
-                if not pathlib.Path(match["instances"][i]["path"]).parts[0] == pathlib.Path(match["instances"][i+1]["path"]).parts[0]:
-                    #Versions are different
-                    flag=True
-                    break
-            if flag:
+            files =[]
+            files_code_lines=[]
+            
+            #For every match, add the files and lines of these files to two lists
+            for match in out: 
+                flag=False
                 for i, instance in enumerate(match["instances"]):
-                    sim_n_code+=match["instances"][i]["lines"][1]-match["instances"][i]["lines"][0] + 1
+                    if i+1==len(match["instances"]):
+                        break
+                    if not pathlib.Path(match["instances"][i]["path"]).parts[0] == pathlib.Path(match["instances"][i+1]["path"]).parts[0]:
+                        #Versions are different
+                        flag=True
+                        break
+                if flag:
+                    for i, instance in enumerate(match["instances"]):
+                        p = match["instances"][i]
+                        if p["path"] not in files:
+                            files.append(p["path"])
+                            files_code_lines.append([])
+                        files_code_lines[files.index(p["path"])].append(p["lines"])
 
+            #From these two lists, take then number of lines while removing overlapping ranges
+            sim_n_code = 0
+            for lines in files_code_lines:
+                merged_ranges = merge_ranges(lines)
+                for lines in merged_ranges:
+                    sim_n_code += lines[1]-lines[0]+1
+        except:
+            sim_n_code=0
+            print(result.stdout.decode('utf-8')[0:1000])
+            print("An exception occurred") 
+
+        #Having the #lines_of_code for both versions, as well as the #similar_lines_of_code we can calculate the coverage
         index1 = paths.index(pair[0])
         index2 = paths.index(pair[1])
         coverage=sim_n_code/(n_code[index1]+n_code[index2])
         data[index2][index1] = coverage
-        print(pair[0], "#code:", n_code[index1], pair[0], "#code:", n_code[index2], "Pair #sim:", sim_n_code, 
+        print(pair[0], "#code:", n_code[index1], pair[1], "#code:", n_code[index2], "Pair #sim:", sim_n_code, 
         "Coverage:", coverage)
-
-    for row in data:
-        print (row)
     
-    fig = px.imshow(data)
+    fig = px.imshow(data, x=paths, y=paths,
+        color_continuous_scale=["white", "cyan", "lightgreen", "yellow", "red"])
 
-    '''
-    fig = px.imshow(data,
-                               x = ["put all jQuery version here"],
-                               y = ["put all jQuery version here"],
-                               color_continuous_scale=["white", "cyan", "lightgreen", "yellow", "red"]
-                              )
-    '''
     fig.show()
     
     
