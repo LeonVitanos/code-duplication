@@ -2,7 +2,9 @@ FROM python:3.6-slim
 
 RUN apt-get update && apt-get install -y curl
 
-RUN curl -sL https://deb.nodesource.com/setup_13.x | bash - && apt-get install -y git nodejs cloc
+RUN curl -sL https://deb.nodesource.com/setup_13.x | bash - && apt-get install -y git nodejs cloc python3-pip
+
+RUN pip3 install seaborn matplotlib
 
 WORKDIR /usr/jquery-data
 
