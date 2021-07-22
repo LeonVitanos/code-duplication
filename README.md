@@ -5,4 +5,4 @@ By analyzing the growth and similarity, new insights can be obtained about the s
 
 In this assignment, similar visualizations were constructed for the jQuery software system, where code clones have been analyzed using JsInspect
 
-![alt text](https://github.com/LeonVitanos/code-duplication/blob/main/output-heatmap.png?raw=true)
+![alt text](https://github.com/LeonVitanos/code-duplication/blob/main/output_heatmap.png?raw=true)
