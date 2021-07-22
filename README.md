@@ -1,36 +1,8 @@
-# Assignment-2-2020
-Template repository for the second assignment, containing a Docker project that clones the relevant version of jQuery, and sets up a working copy of JsInspect. 
+# Code Duplication
+The purpose of the assignment is to get familiar with the process of analyzing the evolution of a software system. Two possible ways to analyze the evolution are to keep track of the growth of the system and to calculate similarity between different versions of the same system. Evolving software systems grow in size, especially early in development. Size and growth of software systems are generally expressed in the amount of lines of code. This growth contributes significantly to the (dis)similarity between versions of the software system. Though the exact formula used to calculate similarity may differ, it is generally the fraction of code that is similar. Hence, consecutive versions that are similar in size have a higher similarity than non-consecutive version which generally differ more in size.
 
-# Dockerfile
+By analyzing the growth and similarity, new insights can be obtained about the software system. For example, patterns in growth and similarity can indicate whether a new version was a patch update, a minor update or a major update as defined by semantic versioning. Patch updates generally result in little growth and in very similar code while minor updates introduce small new features which result in slightly more growth and a higher dissimilarity. Both versions are backwards compatible. Major updates generally break the API and are not backwards compatible. The growth in a major update is significantly larger and results in a higher dissimilarity. Such patterns have been observed and analyzed in different systems. Simone Livieri et al. analyzed the evolution of the Linux Kernel using code clone coverage to calculate similarity. They visualized the growth of the Linux Kernel in graphs and the similarity between the Linux versions in a heat map.
 
-The docker file sets up a docker image where three things 
-are prepared:
-- JsInspect is installed, such that you can run it from the 
-command line.
-- Cloc is installed.
-- All versions of jQuery specified in `jquery_releases.csv` are 
-cloned and downloaded to `/usr/jquery-data`.
+In this assignment, similar visualizations were constructed for the jQuery software system, where code clones have been analyzed using JsInspect
 
-When running the container a bash shell is opened such that you
-can manually execute commands to run JsInspect and cloc. 
-
-## Using this image
-
-Build using `docker build -t 2imp25-assignment2 .`
-
-Then run using 
-`docker run -it --rm -v "$PWD/out:/out" 2imp25-assignment2`. 
-We again mount an out directory linked to the host file system
-such that you can copy out files from the container. 
-
-When the container is running you can execute bash commands
-as if it is a virtual machine. 
-
-# Suggestions
-
-This repository does not contain all files and steps needed to
-run the analysis for assignment 2. To analyze the capability of 
-JsInspect to detect various clones you could for instance
-consider expanding the `Dockerfile` to copy in the manually 
-constructed clones to a directory `/usr/manual-clones`. Such 
-that you can then run JsInspect on those files. 
+![alt text](https://github.com/LeonVitanos/code-duplication/blob/main/output-heatmap.png?raw=true)
